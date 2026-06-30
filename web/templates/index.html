@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Used Car Hunter</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Used Car Hunter</h1>
+      <p>Ottawa / Kanata · Ontario only · CR-V · HR-V · Forester · CX-5 · RAV4 · dealers · 75 km</p>
+    </header>
+
+    <nav>
+      <a href="/">Recommendations</a>
+      <a href="/trends">Trends</a>
+      <a href="/dealers">Dealer Watchlist</a>
+    </nav>
+
+    <div class="date-nav">
+      {% for label, value in quick_dates.items() %}
+        <a href="/?snapshot_date={{ value }}"
+           class="{% if value == requested_date %}active{% endif %}{% if value not in available_dates %} unavailable{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+      <form method="get" action="/" class="date-form">
+        <input type="date" name="snapshot_date" value="{{ requested_date }}">
+        <button type="submit">Go</button>
+      </form>
+    </div>
+
+    {% if sections %}
+      <div class="model-jump-nav">
+        <span class="model-jump-label">Jump to:</span>
+        {% for model in model_nav %}
+          <a href="#model-{{ model.key }}" class="model-jump-link">{{ model.label }}</a>
+        {% endfor %}
+      </div>
+      <p class="listing-restrictions">
+        Showing dealer listings only with estimated drive-away at or below ${{ "{:,}".format(max_drive_away) }}.
+        Sold and sale-pending vehicles are excluded when the source site marks them unavailable.
+      </p>
+    {% endif %}
+
+    {% if snapshot_meta %}
+      <p class="meta">Snapshot: {{ snapshot_meta.snapshot_date }} · {{ snapshot_meta.recommended_count }} picks · updated {{ snapshot_meta.created_at }}</p>
+    {% endif %}
+
+    {% if not has_snapshot %}
+      <div class="empty">
+        <p><strong>No snapshot saved for {{ requested_date }}.</strong></p>
+        <p class="meta">History builds automatically after the app runs each morning at 6:00 AM Eastern. Until then, only dates with a completed search are available.</p>
+        {% if nearest_date and nearest_date != requested_date %}
+          <p><a class="btn" href="/?snapshot_date={{ nearest_date }}">View nearest saved snapshot ({{ nearest_date }})</a></p>
+        {% endif %}
+        {% if available_dates %}
+          <p class="meta">Saved dates:
+            {% for d in available_dates %}
+              <a href="/?snapshot_date={{ d }}">{{ d }}</a>{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </p>
+        {% endif %}
+        {% if is_today %}
+          <p><a class="btn" href="/api/run-now">Run today's search now</a></p>
+        {% endif %}
+      </div>
+    {% elif not sections %}
+      <div class="empty">
+        Snapshot for {{ requested_date }} exists but has no recommendations.
+        {% if is_today %}
+          <p><a class="btn" href="/api/run-now">Run today's search again</a></p>
+        {% endif %}
+      </div>
+    {% else %}
+      {% for section in sections %}
+        <section id="model-{{ section.key }}" class="model-section">
+          <h2>{{ section.label }}</h2>
+          <div class="grid">
+            {% for item in section.listings %}
+              <article class="card">
+                {% if item.image_url %}
+                  <img src="{{ item.image_url }}" alt="{{ item.year }} {{ item.make }} {{ item.model }}">
+                {% else %}
+                  <div style="height:170px;background:#e4e7eb;"></div>
+                {% endif %}
+                <div class="card-body">
+                  <strong>#{{ item.rank }} · {{ item.year }} {{ item.make }} {{ item.model }}{% if item.trim %} {{ item.trim }}{% endif %}</strong>
+                  {% set da = item.price | drive_away %}
+                  <div class="price-row">
+                    <div>
+                      <span class="price-label">List price</span>
+                      <div class="price">${{ "{:,}".format(da.list_price) }}</div>
+                    </div>
+                    <div>
+                      <span class="price-label">Est. drive-away</span>
+                      <div class="price drive-away">${{ "{:,}".format(da.drive_away) }}</div>
+                    </div>
+                  </div>
+                  <div class="meta">
+                    {% if item.mileage_km %}{{ "{:,}".format(item.mileage_km) }} km · {% endif %}
+                    {{ item.fuel_type }} · {{ item.condition_text }}
+                  </div>
+                  <div class="meta">{{ item.dealer_name }}{% if item.dealer_city %} · {{ item.dealer_city }}{% endif %}</div>
+                  <div class="meta">Source: {{ item.source }} · Median ${{ "{:,.0f}".format(item.median_price) }} · {{ "%.1f"|format(item.price_delta_pct) }}% below median (same model{% if item.trim %} &amp; trim{% endif %})</div>
+                  {% if item.is_good_deal %}
+                    <span class="badge">Good deal</span>
+                  {% endif %}
+                  {% if item.dealer_boost > 0 %}
+                    <span class="badge">Watchlist dealer</span>
+                  {% endif %}
+                  <div class="card-actions">
+                    <button type="button" class="card-link details-btn" data-detail='{{ item | vehicle_detail | tojson }}'>Car details</button>
+                    <a class="card-link" href="{{ item.listing_url }}" target="_blank" rel="noopener">View listing</a>
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      {% endfor %}
+    {% endif %}
+
+    <footer>
+      Daily refresh at 6:00 AM Eastern. Deal scores compare each vehicle only with the same model and trim. Prices change — verify on the dealer site before visiting.
+    </footer>
+  </div>
+
+  <div id="detail-modal" class="modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button type="button" class="modal-close" aria-label="Close">&times;</button>
+      <h2 id="modal-title" class="modal-title"></h2>
+      <div id="modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="/static/details.js"></script>
+</body>
+</html>

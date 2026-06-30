@@ -1,0 +1,45 @@
+models:
+  - key: cr-v
+    make: Honda
+    model: CR-V
+    priority: 1
+    autotrader:
+      path: honda/cr-v
+    cargurus:
+      make_model_trim: m6/d589
+
+  - key: hr-v
+    make: Honda
+    model: HR-V
+    priority: 2
+    autotrader:
+      path: honda/hr-v
+    cargurus:
+      make_model_trim: m6
+
+  - key: forester
+    make: Subaru
+    model: Forester
+    priority: 3
+    autotrader:
+      path: subaru/forester
+    cargurus:
+      make_model_trim: m52
+
+  - key: cx-5
+    make: Mazda
+    model: CX-5
+    priority: 4
+    autotrader:
+      path: mazda/cx-5
+    cargurus:
+      make_model_trim: m42
+
+  - key: rav4
+    make: Toyota
+    model: RAV4
+    priority: 5
+    autotrader:
+      path: toyota/rav-4
+    cargurus:
+      make_model_trim: m7

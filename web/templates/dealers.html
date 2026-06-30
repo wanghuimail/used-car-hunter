@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dealer Watchlist · Used Car Hunter</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Dealer Watchlist</h1>
+      <p>Add dealers you want prioritized in daily recommendations. Optional filter mode shows only watchlist dealers.</p>
+    </header>
+
+    <nav>
+      <a href="/">Recommendations</a>
+      <a href="/trends">Trends</a>
+      <a href="/dealers">Dealer Watchlist</a>
+    </nav>
+
+    <section class="panel">
+      <h2>Your watchlist</h2>
+      <form method="post" action="/dealers/add" class="inline">
+        <input type="text" name="name" placeholder="Dealer name (e.g. Kanata Honda)" required>
+        <input type="text" name="city" placeholder="City (optional)">
+        <button type="submit">Add dealer</button>
+      </form>
+
+      <form method="post" action="/dealers/toggle-filter" style="margin-top: 1rem;">
+        <label>
+          <input type="checkbox" name="watchlist_only" value="1" {% if watchlist.watchlist_only %}checked{% endif %}
+                 onchange="this.form.submit()">
+          Only show listings from watchlist dealers
+        </label>
+      </form>
+
+      {% if watchlist.dealers %}
+        <ul class="dealer-list">
+          {% for dealer in watchlist.dealers %}
+            <li>
+              <span><strong>{{ dealer.name }}</strong>{% if dealer.city %} · {{ dealer.city }}{% endif %}</span>
+              <form method="post" action="/dealers/remove" style="margin:0;">
+                <input type="hidden" name="name" value="{{ dealer.name }}">
+                <button type="submit" class="secondary">Remove</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="meta">No dealers in your watchlist yet. Add names below or import a suggestion.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Suggested Ottawa / Kanata dealers</h2>
+      <p class="meta">Starter list based on local reputation and brand fit. Click add to move one into your watchlist.</p>
+      <ul class="dealer-list">
+        {% for dealer in suggested %}
+          <li>
+            <span>
+              <strong>{{ dealer.name }}</strong> · {{ dealer.city }}
+              <div class="meta">{{ dealer.notes }}</div>
+            </span>
+            <form method="post" action="/dealers/add" style="margin:0;">
+              <input type="hidden" name="name" value="{{ dealer.name }}">
+              <input type="hidden" name="city" value="{{ dealer.city }}">
+              <button type="submit">Add</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <footer>
+      Dealer names are matched loosely against listing data. Re-run today's search after editing the watchlist.
+    </footer>
+  </div>
+</body>
+</html>

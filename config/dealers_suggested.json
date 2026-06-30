@@ -1,0 +1,77 @@
+{
+  "notes": "Starter Ottawa/Kanata dealers with generally strong reputations for new/used sales. Edit dealers_watchlist.json or use the web UI to customize.",
+  "dealers": [
+  {
+    "name": "Kanata Honda",
+    "city": "Kanata",
+    "brands": ["Honda"],
+    "notes": "Local Honda dealer; strong CR-V inventory in west Ottawa."
+  },
+  {
+    "name": "Tony Graham Kanata Toyota",
+    "city": "Kanata",
+    "brands": ["Toyota"],
+    "notes": "Part of Tony Graham Automotive Group; high repeat-customer rate."
+  },
+  {
+    "name": "Tony Graham Toyota",
+    "city": "Ottawa",
+    "brands": ["Toyota"],
+    "notes": "Merivale Road location; well-rated on DealerRater."
+  },
+  {
+    "name": "Kanata Toyota",
+    "city": "Kanata",
+    "brands": ["Toyota"],
+    "notes": "Kanata Toyota / Tony Graham Kanata Toyota branding."
+  },
+  {
+    "name": "Barrhaven Honda",
+    "city": "Ottawa",
+    "brands": ["Honda"],
+    "notes": "South Ottawa Honda dealer."
+  },
+  {
+    "name": "Bank Street Honda",
+    "city": "Ottawa",
+    "brands": ["Honda"],
+    "notes": "Central Ottawa Honda dealer."
+  },
+  {
+    "name": "Kanata Mazda",
+    "city": "Kanata",
+    "brands": ["Mazda"],
+    "notes": "Kanata Mazda for CX-5 inventory."
+  },
+  {
+    "name": "Barrhaven Mazda",
+    "city": "Ottawa",
+    "brands": ["Mazda"],
+    "notes": "South Ottawa Mazda dealer."
+  },
+  {
+    "name": "Bank Street Mazda",
+    "city": "Ottawa",
+    "brands": ["Mazda"],
+    "notes": "Central Ottawa Mazda dealer."
+  },
+  {
+    "name": "Carling Motors",
+    "city": "Ottawa",
+    "brands": ["Mazda"],
+    "notes": "West-end Mazda dealer often recommended locally."
+  },
+  {
+    "name": "Hunt Club Honda",
+    "city": "Ottawa",
+    "brands": ["Honda"],
+    "notes": "South/east Ottawa Honda dealer."
+  },
+  {
+    "name": "Myers Kanata Chevrolet Buick GMC",
+    "city": "Kanata",
+    "brands": ["Multi-brand"],
+    "notes": "Large Kanata dealer group; sometimes lists cross-over trade-ins."
+  }
+  ]
+}

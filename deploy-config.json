@@ -1,0 +1,10 @@
+{
+  "repo_url": "https://github.com/REPLACE_WITH_YOUR_USERNAME/used-car-hunter",
+  "service_name": "used-car-hunter",
+  "branch": "main",
+  "port": 8000,
+  "env_vars": {
+    "TZ": "America/Toronto",
+    "DATA_DIR": "/app/data"
+  }
+}

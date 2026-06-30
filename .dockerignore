@@ -1,0 +1,12 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.git/
+.idea/
+.vscode/
+data/
+*.db
+agent-tools/
+terminals/

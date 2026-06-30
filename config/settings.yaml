@@ -1,0 +1,28 @@
+location:
+  postal_code: "K2K2M4"
+  city: "Kanata"
+  province: "Ontario"
+  radius_km: 75
+
+filters:
+  min_model_year_offset: 4
+  ontario_only: true
+  fuel_types:
+    - gasoline
+    - gas
+    - regular unleaded
+  sellers:
+    - dealer
+  top_per_model: 5
+  max_drive_away: 45000
+  exclude_unavailable: true
+
+schedule:
+  hour: 6
+  minute: 0
+  timezone: "America/Toronto"
+
+scoring:
+  km_bucket: 25000
+  year_bucket: 1
+  below_median_pct_threshold: 0.0

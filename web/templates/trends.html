@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Trends · Used Car Hunter</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  {% macro pick_status(pick) %}
+    {% if pick.listing_status == 'sold' or pick.listing_status == 'likely_sold' %}
+      <span class="status-badge status-sold">{{ pick.listing_status_label }}</span>
+      {% if pick.days_listed %}
+        <span class="status-meta">{{ pick.days_listed }} day{{ "s" if pick.days_listed != 1 else "" }} in top picks</span>
+      {% endif %}
+    {% elif pick.link_active %}
+      <a class="trend-listing-link" href="{{ pick.listing_url }}" target="_blank" rel="noopener">View listing</a>
+      {% if pick.days_listed %}
+        <span class="status-meta">{{ pick.days_listed }} day{{ "s" if pick.days_listed != 1 else "" }} tracked</span>
+      {% endif %}
+    {% else %}
+      <span class="status-badge status-unknown">{{ pick.listing_status_label }}</span>
+    {% endif %}
+  {% endmacro %}
+  <div class="container trends-page">
+    <header>
+      <h1>Market Trends</h1>
+      <p>Track how top picks and market medians shift day by day — newest snapshots first.</p>
+    </header>
+
+    <nav>
+      <a href="/">Recommendations</a>
+      <a href="/trends" class="active">Trends</a>
+      <a href="/dealers">Dealer Watchlist</a>
+    </nav>
+
+    <section class="trends-intro panel">
+      <h2>How to read this page</h2>
+      <ul class="trends-guide">
+        <li><strong>Price ladder</strong> — #1 pick list price per model, row by row. Scan down to see whether the best deal is getting cheaper or scarcer.</li>
+        <li><strong>Daily timeline</strong> — each day’s top five per model with median reference and day-over-day change on the #1 pick.</li>
+        <li><strong>Model filter</strong> — focus one SUV when you are close to buying; use <em>All models</em> for a market-wide pulse.</li>
+        <li>After a week or two of daily snapshots you should see typical price bands, which models have thin inventory (&lt;5 picks), and where deals cluster.</li>
+        <li><strong>Listing links</strong> are checked live when you open this page. Sold vehicles are labelled; <em>days in top picks</em> counts from the first to last day we featured that car.</li>
+      </ul>
+    </section>
+
+    <div class="trends-filters">
+      <div class="trends-filter-group">
+        <span class="trends-filter-label">Model</span>
+        <div class="trend-pills">
+          <a href="/trends?days={{ days }}"
+             class="trend-pill {% if not selected_model %}active{% endif %}">All models</a>
+          {% for model in model_nav %}
+            <a href="/trends?days={{ days }}&amp;model={{ model.key }}"
+               class="trend-pill {% if selected_model == model.key %}active{% endif %}">{{ model.label }}</a>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="trends-filter-group">
+        <span class="trends-filter-label">Window</span>
+        <div class="trend-pills">
+          {% for option in [7, 14, 30] %}
+            <a href="/trends?days={{ option }}{% if selected_model %}&amp;model={{ selected_model }}{% endif %}"
+               class="trend-pill {% if days == option %}active{% endif %}">{{ option }} days</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {% if not has_data %}
+      <div class="empty panel">
+        <p><strong>No snapshot history yet.</strong></p>
+        <p class="meta">Trends build automatically after the daily 6:00 AM Eastern run. Run a search from the recommendations page to seed today’s data.</p>
+        <p><a class="btn" href="/">Go to recommendations</a></p>
+      </div>
+    {% else %}
+      <p class="meta trends-meta">
+        {{ days_tracked }} day{{ "s" if days_tracked != 1 else "" }} in view
+        {% if selected_model %} · {{ selected_model_label }}{% endif %}
+        · showing #1–#5 picks per model per day
+      </p>
+
+      {% if model_summaries %}
+        <section class="trends-summary panel">
+          <h2>Window summary</h2>
+          <div class="summary-grid">
+            {% for item in model_summaries %}
+              <article class="summary-card">
+                <h3>{{ item.label }}</h3>
+                <div class="summary-stat">
+                  <span class="summary-label">Latest #1</span>
+                  <strong>${{ "{:,}".format(item.latest_top_price) }}</strong>
+                </div>
+                <div class="summary-stat">
+                  <span class="summary-label">Avg #1 price</span>
+                  <span>${{ "{:,}".format(item.avg_top_price) }}</span>
+                </div>
+                {% if item.avg_median %}
+                  <div class="summary-stat">
+                    <span class="summary-label">Avg trim median</span>
+                    <span>${{ "{:,}".format(item.avg_median) }}</span>
+                  </div>
+                {% endif %}
+                <div class="summary-stat">
+                  <span class="summary-label">Days tracked</span>
+                  <span>{{ item.days_seen }}</span>
+                </div>
+                {% if item.window_change is not none %}
+                  <div class="summary-stat">
+                    <span class="summary-label">#1 change (oldest→latest)</span>
+                    <span class="delta {% if item.window_change < 0 %}delta-down{% elif item.window_change > 0 %}delta-up{% endif %}">
+                      {% if item.window_change > 0 %}+{% endif %}${{ "{:,}".format(item.window_change) }}
+                    </span>
+                  </div>
+                {% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if price_ladder %}
+        <section class="trends-ladder panel">
+          <h2>#1 pick price ladder</h2>
+          <p class="meta">List price of the top-ranked pick each day. Arrows compare to the previous saved snapshot.</p>
+          <div class="ladder-scroll">
+            <table class="ladder-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  {% for cell in price_ladder[0].cells %}
+                    <th>{{ cell.label }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in price_ladder %}
+                  <tr class="{% if row.is_today %}ladder-today{% endif %}">
+                    <th scope="row">
+                      {{ row.date }}
+                      {% if row.is_today %}<span class="today-tag">today</span>{% endif %}
+                    </th>
+                    {% for cell in row.cells %}
+                      <td>
+                        {% if cell.price is not none %}
+                          <div class="ladder-price">${{ "{:,}".format(cell.price) }}</div>
+                          {% if cell.delta is not none %}
+                            <div class="ladder-delta delta {% if cell.delta < 0 %}delta-down{% elif cell.delta > 0 %}delta-up{% endif %}">
+                              {% if cell.delta > 0 %}+{% endif %}${{ "{:,}".format(cell.delta) }}
+                            </div>
+                          {% endif %}
+                        {% else %}
+                          <span class="ladder-empty">—</span>
+                        {% endif %}
+                      </td>
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {% endif %}
+
+      <section class="trends-timeline">
+        <h2>Daily timeline</h2>
+        {% for day in day_sections %}
+          <article class="trend-day panel" id="day-{{ day.date }}">
+            <header class="trend-day-header">
+              <div>
+                <h3>{{ day.date }}{% if day.is_today %} · Today{% endif %}</h3>
+                <p class="meta">{{ day.total_picks }} top pick{{ "s" if day.total_picks != 1 else "" }} saved</p>
+              </div>
+              <a class="card-link" href="/?snapshot_date={{ day.date }}">View full day</a>
+            </header>
+
+            {% if selected_model %}
+              {% for model in day.models %}
+                <div class="trend-model-detail">
+                  <table class="trend-picks-table">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Vehicle</th>
+                        <th>List</th>
+                        <th>Drive-away</th>
+                        <th>vs median</th>
+                        <th>Status</th>
+                        <th>Dealer</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for pick in model.picks %}
+                        <tr class="{% if pick.listing_status == 'sold' or pick.listing_status == 'likely_sold' %}pick-sold{% endif %}">
+                          <td>#{{ pick.rank }}</td>
+                          <td>
+                            {% if pick.link_active %}
+                              <a href="{{ pick.listing_url }}" target="_blank" rel="noopener">{{ pick.vehicle_label }}</a>
+                            {% else %}
+                              {{ pick.vehicle_label }}
+                            {% endif %}
+                          </td>
+                          <td>${{ "{:,}".format(pick.price) }}</td>
+                          <td>${{ "{:,}".format(pick.drive_away) }}</td>
+                          <td class="{% if pick.price_delta_pct < 0 %}delta-down{% elif pick.price_delta_pct > 0 %}delta-up{% endif %}">
+                            {{ "%.1f"|format(pick.price_delta_pct) }}%
+                          </td>
+                          <td class="pick-status-cell">{{ pick_status(pick) }}</td>
+                          <td>{{ pick.dealer_name }}{% if pick.dealer_city %} · {{ pick.dealer_city }}{% endif %}</td>
+                        </tr>
+                      {% else %}
+                        <tr><td colspan="7" class="meta">No picks for this model on this day.</td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% endfor %}
+            {% else %}
+              {% for model in day.models %}
+                <div class="trend-model-block">
+                  <div class="trend-model-head">
+                    <h4>{{ model.label }}</h4>
+                    <div class="trend-model-stats">
+                      {% if model.top_price is not none %}
+                        <span>#1 <strong>${{ "{:,}".format(model.top_price) }}</strong></span>
+                      {% endif %}
+                      {% if model.avg_median %}
+                        <span>median ref <strong>${{ "{:,}".format(model.avg_median) }}</strong></span>
+                      {% endif %}
+                      <span>{{ model.pick_count }}/5 picks</span>
+                      {% if model.top_price_delta is not none %}
+                        <span class="delta {% if model.top_price_delta < 0 %}delta-down{% elif model.top_price_delta > 0 %}delta-up{% endif %}">
+                          #1 {% if model.top_price_delta > 0 %}+{% endif %}${{ "{:,}".format(model.top_price_delta) }} vs prior day
+                        </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% if model.picks %}
+                    <div class="trend-pick-strip">
+                      {% for pick in model.picks %}
+                        <div class="trend-pick-chip {% if pick.is_good_deal %}good-deal{% endif %}{% if pick.listing_status == 'sold' or pick.listing_status == 'likely_sold' %} pick-sold{% endif %}">
+                          <span class="chip-rank">#{{ pick.rank }}</span>
+                          <span class="chip-vehicle">
+                            {% if pick.link_active %}
+                              <a href="{{ pick.listing_url }}" target="_blank" rel="noopener">{{ pick.vehicle_label }}</a>
+                            {% else %}
+                              {{ pick.vehicle_label }}
+                            {% endif %}
+                          </span>
+                          <span class="chip-price">${{ "{:,}".format(pick.price) }}</span>
+                          <span class="chip-meta">{{ "%.1f"|format(pick.price_delta_pct) }}% vs median</span>
+                          <span class="chip-status">{{ pick_status(pick) }}</span>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <p class="meta">No picks saved this day.</p>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% endif %}
+          </article>
+        {% endfor %}
+      </section>
+    {% endif %}
+  </div>
+</body>
+</html>
