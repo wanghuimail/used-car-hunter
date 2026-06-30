@@ -6,7 +6,7 @@ from typing import Any
 from src.config import get_models
 from src.database import get_recommendations, list_snapshot_dates
 from src.drive_away import estimate_drive_away
-from src.filters import row_within_budget
+from src.filters import row_is_recommendable
 from src.listing_status import (
     batch_check_listings,
     build_listing_timeline,
@@ -91,7 +91,7 @@ def build_trend_view(
         rows = [
             _enrich_pick(row)
             for row in get_recommendations(snapshot_date)
-            if row_within_budget(row)
+            if row_is_recommendable(row)
         ]
         rows_by_date[snapshot_date] = rows
         grouped: dict[str, list[dict[str, Any]]] = {}

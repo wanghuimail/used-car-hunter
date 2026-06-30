@@ -5,6 +5,7 @@ import statistics
 from collections import defaultdict
 
 from src.config import get_models, get_settings, get_watchlist
+from src.filters import listing_is_recommendable
 from src.models import Listing, ScoredListing
 from src.vehicle_detail import match_trim
 
@@ -92,6 +93,8 @@ def score_listings(listings: list[Listing]) -> list[ScoredListing]:
 
     scored: list[ScoredListing] = []
     for listing in listings:
+        if not listing_is_recommendable(listing):
+            continue
         if watchlist_only and watchlist_names:
             if not dealer_matches_watchlist(listing.dealer_name, watchlist_names):
                 continue
@@ -145,8 +148,14 @@ def pick_top_per_model(scored: list[ScoredListing]) -> list[ScoredListing]:
             key=lambda x: (x.rank_score, x.price_delta_pct),
             reverse=True,
         )
-        for rank, item in enumerate(group[:top_n], start=1):
-            item.rank = rank
+        picked = 0
+        for item in group:
+            if not listing_is_recommendable(item.listing):
+                continue
+            picked += 1
+            item.rank = picked
             selected.append(item)
+            if picked >= top_n:
+                break
 
     return selected

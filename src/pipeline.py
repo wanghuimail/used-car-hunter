@@ -4,7 +4,7 @@ import logging
 from datetime import date
 
 from src.config import get_models, get_settings
-from src.filters import is_ontario_listing, listing_within_budget
+from src.filters import is_ontario_listing, listing_is_recommendable
 from src.database import save_snapshot
 from src.models import Listing
 from src.score import pick_top_per_model, score_listings
@@ -55,9 +55,9 @@ def filter_listings(listings: list[Listing]) -> list[Listing]:
                 listing.source,
             )
             continue
-        if not listing_within_budget(listing):
+        if not listing_is_recommendable(listing):
             logger.info(
-                "Excluded over budget listing: %s %s $%s (%s)",
+                "Excluded ineligible listing: %s %s $%s (%s)",
                 listing.year,
                 listing.model,
                 listing.price,

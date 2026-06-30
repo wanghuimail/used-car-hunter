@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from src.config import get_models, get_settings, get_suggested_dealers, get_watchlist, save_json
-from src.filters import max_drive_away_cap, row_within_budget
+from src.filters import max_drive_away_cap, row_is_recommendable
 from src.database import (
     get_recommendations,
     get_snapshot_meta,
@@ -77,7 +77,7 @@ def _build_model_nav() -> list[dict[str, str]]:
 
 
 def _filter_display_rows(rows: list[dict]) -> list[dict]:
-    return [row for row in rows if row_within_budget(row)]
+    return [row for row in rows if row_is_recommendable(row)]
 
 
 def _build_sections(rows: list[dict]) -> list[dict]:

@@ -8,7 +8,7 @@ import urllib.request
 from urllib.parse import urljoin
 
 from src.config import get_settings, min_allowed_year
-from src.filters import format_location, is_ontario_listing, normalize_province, province_from_city_text
+from src.filters import format_location, is_ontario_listing, normalize_province, province_from_city_text, text_indicates_sold_marker
 from src.models import Listing
 from src.scraper.base import (
     BROWSER_HEADERS,
@@ -222,6 +222,8 @@ class CarGurusScraper(BaseScraper):
         trim = clean_trim(ontology.get("trimName")) or trim_from_title(
             title, model_cfg["make"], model_cfg["model"]
         )
+        if text_indicates_sold_marker(trim, title, raw.get("listingTitle")):
+            return None
 
         return Listing(
             listing_id=f"cg-{listing_id}",
@@ -282,6 +284,8 @@ class CarGurusScraper(BaseScraper):
         trim = clean_trim(raw.get("trim")) or trim_from_title(
             title, model_cfg["make"], model_cfg["model"]
         )
+        if text_indicates_sold_marker(trim, title):
+            return None
 
         if not is_ontario_listing(dealer_city, dealer_province, dealer_name=""):
             return None

@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import httpx
 
 from src.config import get_settings, min_allowed_year
-from src.filters import format_location, is_ontario_listing, normalize_province
+from src.filters import format_location, is_ontario_listing, normalize_province, text_indicates_sold_marker
 from src.models import Listing
 from src.scraper.base import (
     BROWSER_HEADERS,
@@ -178,6 +178,8 @@ class AutoTraderScraper(BaseScraper):
         condition = vehicle.get("condition") or vehicle.get("inventoryType") or "Used"
         listing_id = str(raw.get("id") or raw.get("identifier") or listing_url)
         trim = clean_trim(vehicle.get("modelVersionInput") or vehicle.get("variant"))
+        if text_indicates_sold_marker(trim, condition, vehicle.get("modelVersionInput")):
+            return None
 
         return Listing(
             listing_id=f"at-{listing_id}",

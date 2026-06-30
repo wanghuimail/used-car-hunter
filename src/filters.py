@@ -200,8 +200,48 @@ def listing_within_budget(listing: Listing) -> bool:
     return price_within_drive_away_budget(listing.price)
 
 
+def text_indicates_sold_marker(*values: object) -> bool:
+    text = " ".join(str(value or "") for value in values).lower()
+    if not text.strip():
+        return False
+    sold_phrases = (
+        "just sold",
+        ">>sold<<",
+        "sold pending",
+        "sale pending",
+        "no longer available",
+    )
+    return any(phrase in text for phrase in sold_phrases)
+
+
+def listing_is_recommendable(listing: Listing) -> bool:
+    if not listing_within_budget(listing):
+        return False
+    if text_indicates_sold_marker(
+        listing.trim,
+        listing.condition_text,
+        listing.model,
+        listing.dealer_name,
+    ):
+        return False
+    return True
+
+
 def row_within_budget(row: dict) -> bool:
     price = row.get("price")
     if price is None:
         return False
     return price_within_drive_away_budget(int(price))
+
+
+def row_is_recommendable(row: dict) -> bool:
+    if not row_within_budget(row):
+        return False
+    if text_indicates_sold_marker(
+        row.get("trim"),
+        row.get("condition_text"),
+        row.get("model"),
+        row.get("dealer_name"),
+    ):
+        return False
+    return True
