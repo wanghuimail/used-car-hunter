@@ -5,6 +5,11 @@ __pycache__/
 *.py[cod]
 data/
 *.db
+*.docx
+~$*
+~WRL*
+agent-tools/
+terminals/
 .DS_Store
 .idea/
 .vscode/
