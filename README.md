@@ -29,7 +29,8 @@ Open http://localhost:8000
 | File | Purpose |
 |------|---------|
 | `config/settings.yaml` | Location, radius, schedule, scoring |
-| `config/models.yaml` | Target makes/models and source paths |
+| `config/model_catalog.yaml` | Supported brands/models and scraper paths |
+| `config/models_selection.json` | Your active model picks (up to 5), edited on the Models page |
 | `config/dealers_watchlist.json` | Your dealer watchlist |
 | `config/dealers_suggested.json` | Starter Ottawa/Kanata dealers |
 

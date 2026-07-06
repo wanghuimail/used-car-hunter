@@ -320,6 +320,58 @@ button.secondary {
   border-bottom: 1px solid var(--border);
 }
 
+.model-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.model-picker-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.slot-label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.model-picker-row select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  font: inherit;
+}
+
+.model-picker-row select:disabled {
+  background: #eef2f6;
+  color: var(--muted);
+}
+
+.model-picker-actions {
+  margin-top: 0.5rem;
+}
+
+.active-model-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .model-picker-row {
+    grid-template-columns: 1fr;
+  }
+
+  .slot-label {
+    margin-bottom: -0.35rem;
+  }
+}
+
 footer {
   margin-top: 2rem;
   color: var(--muted);

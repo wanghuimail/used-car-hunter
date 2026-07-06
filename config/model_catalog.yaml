@@ -1,0 +1,81 @@
+# Supported brands and models for search. Scraper paths are verified for Ottawa-area searches.
+brands:
+  - make: Honda
+    cargurus_brand: m6
+    models:
+      - key: cr-v
+        name: CR-V
+        autotrader: honda/cr-v
+        cargurus: m6/d589
+      - key: hr-v
+        name: HR-V
+        autotrader: honda/hr-v
+        cargurus: m6
+      - key: pilot
+        name: Pilot
+        autotrader: honda/pilot
+        cargurus: m6
+
+  - make: Toyota
+    cargurus_brand: m7
+    models:
+      - key: rav4
+        name: RAV4
+        autotrader: toyota/rav-4
+        cargurus: m7
+      - key: corolla-cross
+        name: Corolla Cross
+        autotrader: toyota/corolla-cross
+        cargurus: m7
+      - key: highlander
+        name: Highlander
+        autotrader: toyota/highlander
+        cargurus: m7
+
+  - make: Subaru
+    cargurus_brand: m52
+    models:
+      - key: forester
+        name: Forester
+        autotrader: subaru/forester
+        cargurus: m52
+      - key: crosstrek
+        name: Crosstrek
+        autotrader: subaru/crosstrek
+        cargurus: m52
+      - key: outback
+        name: Outback
+        autotrader: subaru/outback
+        cargurus: m52
+
+  - make: Mazda
+    cargurus_brand: m42
+    models:
+      - key: cx-5
+        name: CX-5
+        autotrader: mazda/cx-5
+        cargurus: m42
+      - key: cx-30
+        name: CX-30
+        autotrader: mazda/cx-30
+        cargurus: m42
+      - key: cx-50
+        name: CX-50
+        autotrader: mazda/cx-50
+        cargurus: m42
+
+  - make: Hyundai
+    cargurus_brand: m17
+    models:
+      - key: tucson
+        name: Tucson
+        autotrader: hyundai/tucson
+        cargurus: m17
+      - key: kona
+        name: Kona
+        autotrader: hyundai/kona
+        cargurus: m17
+      - key: santa-fe
+        name: Santa Fe
+        autotrader: hyundai/santa-fe
+        cargurus: m17

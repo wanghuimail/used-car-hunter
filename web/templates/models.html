@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Models · Used Car Hunter</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Search Models</h1>
+      <p>Choose up to five brand and model pairs for daily searches. Each slot is one make plus one model (for example Honda CR-V).</p>
+    </header>
+
+    <nav>
+      <a href="/">Recommendations</a>
+      <a href="/trends">Trends</a>
+      <a href="/models" class="active">Models</a>
+      <a href="/dealers">Dealer Watchlist</a>
+    </nav>
+
+    <section class="panel">
+      <h2>Your search targets</h2>
+      <p class="meta">Priority follows top-to-bottom order. After saving, run today's search to refresh recommendations.</p>
+
+      <form id="model-selection-form" method="post" action="/models/save">
+        <div class="model-picker">
+          {% for slot in slots %}
+            <div class="model-picker-row">
+              <label class="slot-label">#{{ slot.index }}</label>
+              <select class="make-select" aria-label="Brand {{ slot.index }}">
+                <option value="">Select brand…</option>
+                {% for brand in catalog %}
+                  <option value="{{ brand.make }}" {% if brand.make == slot.make %}selected{% endif %}>{{ brand.make }}</option>
+                {% endfor %}
+              </select>
+              <select class="model-select" aria-label="Model {{ slot.index }}" data-selected="{{ slot.model }}">
+                <option value="">Select model…</option>
+              </select>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div id="selection-hidden-fields"></div>
+
+        <div class="model-picker-actions">
+          <button type="submit">Save models</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Currently active</h2>
+      {% if active_models %}
+        <ol class="active-model-list">
+          {% for model in active_models %}
+            <li><strong>{{ model.label }}</strong></li>
+          {% endfor %}
+        </ol>
+      {% else %}
+        <p class="meta">No valid models selected yet.</p>
+      {% endif %}
+    </section>
+
+    <footer>
+      Supported brands and models are listed in the catalog. Re-run today's search after changing your selection.
+    </footer>
+  </div>
+
+  <script>
+    window.MODEL_CATALOG = {{ catalog_json | safe }};
+  </script>
+  <script src="/static/models.js"></script>
+</body>
+</html>

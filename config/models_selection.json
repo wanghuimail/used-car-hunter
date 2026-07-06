@@ -1,0 +1,9 @@
+{
+  "selections": [
+    {"make": "Honda", "model": "CR-V"},
+    {"make": "Honda", "model": "HR-V"},
+    {"make": "Subaru", "model": "Forester"},
+    {"make": "Mazda", "model": "CX-5"},
+    {"make": "Toyota", "model": "RAV4"}
+  ]
+}

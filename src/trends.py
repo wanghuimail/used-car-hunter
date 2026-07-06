@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from src.config import get_models
+from src.config import format_model_label, get_models, model_labels_map
 from src.database import get_recommendations, list_snapshot_dates
 from src.drive_away import estimate_drive_away
 from src.filters import row_is_recommendable
@@ -14,13 +14,8 @@ from src.listing_status import (
     reset_listing_status_cache,
 )
 
-MODEL_LABELS = {
-    "cr-v": "Honda CR-V",
-    "hr-v": "Honda HR-V",
-    "forester": "Subaru Forester",
-    "cx-5": "Mazda CX-5",
-    "rav4": "Toyota RAV4",
-}
+def _model_labels() -> dict[str, str]:
+    return model_labels_map()
 
 
 def _model_order() -> list[dict[str, Any]]:
@@ -158,7 +153,7 @@ def build_trend_view(
             model_rows.append(
                 {
                     "key": key,
-                    "label": MODEL_LABELS.get(key, model["model"]),
+                    "label": _model_labels().get(key, model["model"]),
                     "picks": picks,
                     "pick_count": len(picks),
                     "top_price": picks[0]["price"] if picks else None,
@@ -188,7 +183,7 @@ def build_trend_view(
             cells.append(
                 {
                     "key": key,
-                    "label": MODEL_LABELS.get(key, model["model"]),
+                    "label": _model_labels().get(key, model["model"]),
                     "price": price,
                     "delta": price_delta_by_date_model.get(snapshot_date, {}).get(key),
                 }
@@ -218,7 +213,7 @@ def build_trend_view(
         model_summaries.append(
             {
                 "key": key,
-                "label": MODEL_LABELS.get(key, model["model"]),
+                "label": _model_labels().get(key, model["model"]),
                 "days_seen": len(top_prices),
                 "latest_top_price": latest,
                 "avg_top_price": round(sum(top_prices) / len(top_prices)),
@@ -232,9 +227,9 @@ def build_trend_view(
         "days": days,
         "days_tracked": len(dates),
         "selected_model": model_key,
-        "selected_model_label": MODEL_LABELS.get(model_key, "All models") if model_key else "All models",
+        "selected_model_label": _model_labels().get(model_key, "All models") if model_key else "All models",
         "model_nav": [
-            {"key": model["key"], "label": MODEL_LABELS.get(model["key"], model["model"])}
+            {"key": model["key"], "label": _model_labels().get(model["key"], model["model"])}
             for model in model_defs
         ],
         "day_sections": day_sections,

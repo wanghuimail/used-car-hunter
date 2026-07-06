@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -12,7 +13,19 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from src.config import get_models, get_settings, get_suggested_dealers, get_watchlist, save_json
+from src.config import (
+    format_model_label,
+    get_model_catalog,
+    get_model_selection,
+    get_models,
+    get_settings,
+    get_suggested_dealers,
+    get_watchlist,
+    model_labels_map,
+    save_json,
+    save_model_selection,
+    validate_model_selection,
+)
 from src.filters import max_drive_away_cap, row_is_recommendable
 from src.database import (
     get_recommendations,
@@ -37,13 +50,37 @@ templates = Jinja2Templates(directory=str(WEB_DIR / "templates"))
 templates.env.filters["drive_away"] = lambda price: estimate_drive_away(int(price))
 templates.env.filters["vehicle_detail"] = build_vehicle_detail
 
-MODEL_LABELS = {
-    "cr-v": "Honda CR-V",
-    "hr-v": "Honda HR-V",
-    "forester": "Subaru Forester",
-    "cx-5": "Mazda CX-5",
-    "rav4": "Toyota RAV4",
-}
+
+def _model_summary_text() -> str:
+    labels = [format_model_label(model) for model in sorted(get_models(), key=lambda item: item["priority"])]
+    return " · ".join(labels) if labels else "No models selected"
+
+
+def _catalog_for_picker() -> list[dict]:
+    return [
+        {
+            "make": brand["make"],
+            "models": [{"name": model["name"]} for model in brand["models"]],
+        }
+        for brand in get_model_catalog()
+    ]
+
+
+def _model_picker_slots() -> list[dict]:
+    selection = get_model_selection()
+    slots: list[dict] = []
+    for index in range(5):
+        if index < len(selection):
+            slots.append(
+                {
+                    "index": index + 1,
+                    "make": selection[index]["make"],
+                    "model": selection[index]["model"],
+                }
+            )
+        else:
+            slots.append({"index": index + 1, "make": "", "model": ""})
+    return slots
 
 
 @asynccontextmanager
@@ -67,10 +104,11 @@ app.mount("/static", StaticFiles(directory=str(WEB_DIR / "static")), name="stati
 
 
 def _build_model_nav() -> list[dict[str, str]]:
+    labels = model_labels_map()
     return [
         {
             "key": model["key"],
-            "label": MODEL_LABELS.get(model["key"], model["model"]),
+            "label": labels.get(model["key"], model["model"]),
         }
         for model in sorted(get_models(), key=lambda item: item["priority"])
     ]
@@ -81,6 +119,7 @@ def _filter_display_rows(rows: list[dict]) -> list[dict]:
 
 
 def _build_sections(rows: list[dict]) -> list[dict]:
+    labels = model_labels_map()
     by_key: dict[str, list[dict]] = {}
     for row in rows:
         by_key.setdefault(row["model_key"], []).append(row)
@@ -93,7 +132,7 @@ def _build_sections(rows: list[dict]) -> list[dict]:
         sections.append(
             {
                 "key": model["key"],
-                "label": MODEL_LABELS.get(model["key"], model["model"]),
+                "label": labels.get(model["key"], model["model"]),
                 "listings": items,
             }
         )
@@ -138,8 +177,46 @@ async def home(request: Request, selected: str | None = None, snapshot_date: str
             "model_nav": _build_model_nav(),
             "is_today": requested_date == today,
             "max_drive_away": max_drive_away,
+            "model_summary": _model_summary_text(),
         },
     )
+
+
+@app.get("/models", response_class=HTMLResponse)
+async def models_page(request: Request):
+    active_models = [
+        {
+            "key": model["key"],
+            "label": format_model_label(model),
+        }
+        for model in sorted(get_models(), key=lambda item: item["priority"])
+    ]
+    return templates.TemplateResponse(
+        request,
+        "models.html",
+        {
+            "catalog": get_model_catalog(),
+            "catalog_json": json.dumps(_catalog_for_picker()),
+            "slots": _model_picker_slots(),
+            "active_models": active_models,
+        },
+    )
+
+
+@app.post("/models/save")
+async def save_models(request: Request):
+    form = await request.form()
+    submitted: list[dict[str, str]] = []
+    for index in range(5):
+        make = str(form.get(f"make_{index}") or "").strip()
+        model = str(form.get(f"model_{index}") or "").strip()
+        if make and model:
+            submitted.append({"make": make, "model": model})
+
+    validated = validate_model_selection(submitted)
+    if validated:
+        save_model_selection(validated)
+    return RedirectResponse("/models", status_code=303)
 
 
 @app.get("/trends", response_class=HTMLResponse)
