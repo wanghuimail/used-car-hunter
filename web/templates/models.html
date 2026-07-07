@@ -5,55 +5,123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Search Models · Used Car Hunter</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/models.css">
 </head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Search Models</h1>
-      <p>Pick a brand and model, add it to your list (up to five), then start the search.</p>
-    </header>
+<body class="models-page">
+  <header class="models-topbar">
+    <div class="models-topbar-inner">
+      <a href="/" class="models-brand">Used Car Hunter</a>
+      <nav class="models-nav">
+        <a href="/">Recommendations</a>
+        <a href="/trends">Trends</a>
+        <a href="/models" class="active">Search</a>
+        <a href="/dealers">Dealers</a>
+      </nav>
+    </div>
+  </header>
 
-    <nav>
-      <a href="/">Recommendations</a>
-      <a href="/trends">Trends</a>
-      <a href="/models" class="active">Models</a>
-      <a href="/dealers">Dealer Watchlist</a>
-    </nav>
+  <section class="search-hero" aria-label="Search introduction">
+    <div class="search-hero-content">
+      <p class="search-hero-eyebrow">Ottawa / Kanata · Ontario dealers · 75 km</p>
+      <h1>Find your next vehicle</h1>
+      <p class="search-hero-lead">Choose up to five makes and models. We scan AutoTrader and CarGurus daily and rank the best local deals.</p>
+    </div>
+  </section>
 
-    <section class="panel">
-      <h2>Build your search list</h2>
-      <p class="meta">Order in the list is search priority (top first). You can add the same brand more than once with different models.</p>
-
-      <div class="model-add-row">
-        <select id="make-select" aria-label="Brand">
-          <option value="">Select brand…</option>
-          {% for brand in catalog %}
-            <option value="{{ brand.make }}">{{ brand.make }}</option>
-          {% endfor %}
-        </select>
-        <select id="model-select" aria-label="Model" disabled>
-          <option value="">Select model…</option>
-        </select>
-        <button type="button" id="add-model-btn" class="secondary">Add</button>
-      </div>
-
-      <p id="selection-count" class="meta selection-count">0 / 5 models selected</p>
-
-      <ul id="selected-models-list" class="selected-model-list"></ul>
-      <p id="selected-models-empty" class="meta">No models added yet.</p>
-
-      <form id="model-search-form" method="post" action="/models/search">
-        <div id="selection-hidden-fields"></div>
-        <div class="model-picker-actions">
-          <button type="submit" id="search-btn">Start search</button>
+  <main class="models-main">
+    <div class="models-layout">
+      <section class="search-widget" aria-labelledby="search-widget-title">
+        <div class="search-widget-head">
+          <div>
+            <h2 id="search-widget-title">Build your search</h2>
+            <p class="search-widget-sub">Add vehicles one at a time, then run inventory search.</p>
+          </div>
+          <div class="selection-badge" id="selection-count" aria-live="polite">0 of 5</div>
         </div>
-      </form>
-    </section>
 
-    <footer>
-      Supported brands and models come from the catalog. Starting a search scrapes listings and updates today's recommendations.
-    </footer>
-  </div>
+        <div class="slot-track" id="slot-track" aria-hidden="true">
+          <span class="slot-dot"></span>
+          <span class="slot-dot"></span>
+          <span class="slot-dot"></span>
+          <span class="slot-dot"></span>
+          <span class="slot-dot"></span>
+        </div>
+
+        <div class="search-fields">
+          <div class="search-field">
+            <label for="make-select">Make</label>
+            <div class="select-wrap">
+              <select id="make-select" aria-label="Make">
+                <option value="">Any make</option>
+                {% for brand in catalog %}
+                  <option value="{{ brand.make }}">{{ brand.make }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="search-field">
+            <label for="model-select">Model</label>
+            <div class="select-wrap">
+              <select id="model-select" aria-label="Model" disabled>
+                <option value="">Select make first</option>
+              </select>
+            </div>
+          </div>
+          <button type="button" id="add-model-btn" class="add-vehicle-btn">
+            <span class="add-icon" aria-hidden="true">+</span>
+            Add to shortlist
+          </button>
+        </div>
+
+        <div class="shortlist-section">
+          <div class="shortlist-header">
+            <h3>Your shortlist</h3>
+            <p class="shortlist-hint">Top = highest priority in results</p>
+          </div>
+
+          <div id="selected-models-empty" class="shortlist-empty">
+            <div class="shortlist-empty-icon" aria-hidden="true"></div>
+            <p><strong>No vehicles yet</strong></p>
+            <p>Pick a make and model above, then add them here.</p>
+          </div>
+
+          <div id="selected-models-list" class="vehicle-cards" hidden></div>
+        </div>
+
+        <form id="model-search-form" method="post" action="/models/search" class="search-form">
+          <div id="selection-hidden-fields"></div>
+          <button type="submit" id="search-btn" class="search-cta" disabled>
+            Search inventory
+          </button>
+          <p class="search-cta-note">Scrapes listings, scores deals, and updates today's recommendations.</p>
+        </form>
+      </section>
+
+      <aside class="search-sidebar">
+        <div class="sidebar-card">
+          <h3>How it works</h3>
+          <ol class="sidebar-steps">
+            <li>Select make &amp; model</li>
+            <li>Add up to 5 vehicles</li>
+            <li>Search inventory</li>
+            <li>Review ranked picks</li>
+          </ol>
+        </div>
+        <div class="sidebar-card sidebar-card-muted">
+          <h3>Coverage</h3>
+          <ul class="sidebar-facts">
+            <li><span>Area</span><strong>Ottawa / Kanata</strong></li>
+            <li><span>Radius</span><strong>75 km</strong></li>
+            <li><span>Sources</span><strong>AutoTrader · CarGurus</strong></li>
+            <li><span>Sellers</span><strong>Dealers only</strong></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="models-footer">
+  </footer>
 
   <script>
     window.MODEL_CATALOG = {{ catalog_json | safe }};

@@ -14,6 +14,7 @@
   const listEl = document.getElementById("selected-models-list");
   const emptyEl = document.getElementById("selected-models-empty");
   const countEl = document.getElementById("selection-count");
+  const slotTrack = document.getElementById("slot-track");
   const searchBtn = document.getElementById("search-btn");
   const form = document.getElementById("model-search-form");
 
@@ -30,7 +31,7 @@
     modelSelect.innerHTML = "";
     const placeholder = document.createElement("option");
     placeholder.value = "";
-    placeholder.textContent = "Select model…";
+    placeholder.textContent = make ? "Choose model" : "Select make first";
     modelSelect.appendChild(placeholder);
 
     if (!make) {
@@ -47,49 +48,68 @@
     }
   }
 
+  function updateSlotTrack() {
+    if (!slotTrack) {
+      return;
+    }
+    const dots = slotTrack.querySelectorAll(".slot-dot");
+    dots.forEach((dot, index) => {
+      dot.classList.toggle("filled", index < selections.length);
+    });
+  }
+
   function renderList() {
     listEl.innerHTML = "";
     selections.forEach((item, index) => {
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <span><strong>#${index + 1}</strong> ${item.make} ${item.model}</span>
-        <button type="button" class="secondary remove-model-btn" data-index="${index}">Remove</button>
+      const card = document.createElement("article");
+      card.className = "vehicle-card";
+      card.innerHTML = `
+        <div class="vehicle-card-rank" aria-hidden="true">${index + 1}</div>
+        <div class="vehicle-card-body">
+          <div class="vehicle-card-make">${item.make}</div>
+          <div class="vehicle-card-model">${item.model}</div>
+        </div>
+        <button type="button" class="vehicle-card-remove remove-model-btn" data-index="${index}" aria-label="Remove ${item.make} ${item.model}">
+          Remove
+        </button>
       `;
-      listEl.appendChild(li);
+      listEl.appendChild(card);
     });
 
     const hasItems = selections.length > 0;
     listEl.hidden = !hasItems;
     emptyEl.hidden = hasItems;
-    countEl.textContent = `${selections.length} / ${maxModels} models selected`;
 
-    const atMax = selections.length >= maxModels;
+    const count = selections.length;
+    countEl.textContent = `${count} of ${maxModels}`;
+    countEl.classList.toggle("is-full", count >= maxModels);
+
+    const atMax = count >= maxModels;
     addBtn.disabled = atMax;
-    searchBtn.disabled = selections.length === 0;
-    if (atMax) {
-      countEl.textContent += " — maximum reached";
-    }
+    searchBtn.disabled = count === 0;
+    updateSlotTrack();
   }
 
   function addSelection() {
     const make = makeSelect.value.trim();
     const model = modelSelect.value.trim();
     if (!make || !model) {
-      window.alert("Choose both a brand and a model before adding.");
+      window.alert("Choose both a make and a model before adding.");
       return;
     }
     if (selections.length >= maxModels) {
-      window.alert(`You can add up to ${maxModels} models.`);
+      window.alert(`You can add up to ${maxModels} vehicles.`);
       return;
     }
     if (selections.some((item) => pairKey(item.make, item.model) === pairKey(make, model))) {
-      window.alert(`${make} ${model} is already in your list.`);
+      window.alert(`${make} ${model} is already on your shortlist.`);
       return;
     }
 
     selections.push({ make, model });
     renderList();
     modelSelect.value = "";
+    makeSelect.focus();
   }
 
   function removeSelection(index) {
@@ -140,10 +160,12 @@
     form.addEventListener("submit", (event) => {
       if (selections.length === 0) {
         event.preventDefault();
-        window.alert("Add at least one brand and model before starting a search.");
+        window.alert("Add at least one vehicle before searching.");
         return;
       }
       writeHiddenFields();
+      searchBtn.disabled = true;
+      searchBtn.textContent = "Searching…";
     });
   }
 
