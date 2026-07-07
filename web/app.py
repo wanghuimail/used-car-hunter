@@ -242,7 +242,7 @@ async def models_page(request: Request):
 
 
 @app.post("/models/save")
-async def save_models(request: Request):
+async def save_models(request: Request, background_tasks: BackgroundTasks):
     form = await request.form()
     submitted: list[dict[str, str]] = []
     for index in range(5):
@@ -254,7 +254,7 @@ async def save_models(request: Request):
     validated = validate_model_selection(submitted)
     if validated:
         save_model_selection(validated)
-        return RedirectResponse("/api/run-now", status_code=303)
+        return _schedule_search(background_tasks)
     return RedirectResponse("/models", status_code=303)
 
 
@@ -322,16 +322,25 @@ async def snapshots() -> JSONResponse:
     return JSONResponse({"dates": list_snapshot_dates()})
 
 
+@app.get("/api/run-now")
+async def run_now_get(background_tasks: BackgroundTasks):
+    return _schedule_search(background_tasks)
+
+
 @app.post("/api/run-now")
-async def run_now(background_tasks: BackgroundTasks):
-    background_tasks.add_task(_run_snapshot_job)
-    return RedirectResponse("/?search_started=1", status_code=303)
+async def run_now_post(background_tasks: BackgroundTasks):
+    return _schedule_search(background_tasks)
 
 
 @app.post("/api/run")
 async def run_api(background_tasks: BackgroundTasks) -> JSONResponse:
     background_tasks.add_task(_run_snapshot_job)
     return JSONResponse({"status": "started"})
+
+
+def _schedule_search(background_tasks: BackgroundTasks) -> RedirectResponse:
+    background_tasks.add_task(_run_snapshot_job)
+    return RedirectResponse("/?search_started=1", status_code=303)
 
 
 def _normalize(value: str) -> str:
