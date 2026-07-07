@@ -10,7 +10,7 @@
   <div class="container">
     <header>
       <h1>Search Models</h1>
-      <p>Choose up to five brand and model pairs for daily searches. Each slot is one make plus one model (for example Honda CR-V).</p>
+      <p>Pick a brand and model, add it to your list (up to five), then start the search.</p>
     </header>
 
     <nav>
@@ -21,55 +21,43 @@
     </nav>
 
     <section class="panel">
-      <h2>Your search targets</h2>
-      <p class="meta">Priority follows top-to-bottom order. Saving runs today's search automatically so recommendations match your picks.</p>
+      <h2>Build your search list</h2>
+      <p class="meta">Order in the list is search priority (top first). You can add the same brand more than once with different models.</p>
 
-      <form id="model-selection-form" method="post" action="/models/save">
-        <div class="model-picker">
-          {% for slot in slots %}
-            <div class="model-picker-row">
-              <label class="slot-label">#{{ slot.index }}</label>
-              <select class="make-select" aria-label="Brand {{ slot.index }}">
-                <option value="">Select brand…</option>
-                {% for brand in catalog %}
-                  <option value="{{ brand.make }}" {% if brand.make == slot.make %}selected{% endif %}>{{ brand.make }}</option>
-                {% endfor %}
-              </select>
-              <select class="model-select" aria-label="Model {{ slot.index }}" data-selected="{{ slot.model }}">
-                <option value="">Select model…</option>
-              </select>
-            </div>
+      <div class="model-add-row">
+        <select id="make-select" aria-label="Brand">
+          <option value="">Select brand…</option>
+          {% for brand in catalog %}
+            <option value="{{ brand.make }}">{{ brand.make }}</option>
           {% endfor %}
-        </div>
+        </select>
+        <select id="model-select" aria-label="Model" disabled>
+          <option value="">Select model…</option>
+        </select>
+        <button type="button" id="add-model-btn" class="secondary">Add</button>
+      </div>
 
+      <p id="selection-count" class="meta selection-count">0 / 5 models selected</p>
+
+      <ul id="selected-models-list" class="selected-model-list"></ul>
+      <p id="selected-models-empty" class="meta">No models added yet.</p>
+
+      <form id="model-search-form" method="post" action="/models/search">
         <div id="selection-hidden-fields"></div>
-
         <div class="model-picker-actions">
-          <button type="submit">Save models</button>
+          <button type="submit" id="search-btn">Start search</button>
         </div>
       </form>
     </section>
 
-    <section class="panel">
-      <h2>Currently active</h2>
-      {% if active_models %}
-        <ol class="active-model-list">
-          {% for model in active_models %}
-            <li><strong>{{ model.label }}</strong></li>
-          {% endfor %}
-        </ol>
-      {% else %}
-        <p class="meta">No valid models selected yet.</p>
-      {% endif %}
-    </section>
-
     <footer>
-      Supported brands and models are listed in the catalog. Re-run today's search after changing your selection.
+      Supported brands and models come from the catalog. Starting a search scrapes listings and updates today's recommendations.
     </footer>
   </div>
 
   <script>
     window.MODEL_CATALOG = {{ catalog_json | safe }};
+    window.MODEL_SELECTION = {{ selection_json | safe }};
   </script>
   <script src="/static/models.js"></script>
 </body>

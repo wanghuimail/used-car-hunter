@@ -84,23 +84,6 @@ def _catalog_for_picker() -> list[dict]:
     ]
 
 
-def _model_picker_slots() -> list[dict]:
-    selection = get_model_selection()
-    slots: list[dict] = []
-    for index in range(5):
-        if index < len(selection):
-            slots.append(
-                {
-                    "index": index + 1,
-                    "make": selection[index]["make"],
-                    "model": selection[index]["model"],
-                }
-            )
-        else:
-            slots.append({"index": index + 1, "make": "", "model": ""})
-    return slots
-
-
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
@@ -174,6 +157,11 @@ def _nearest_snapshot(target: str, available: list[str]) -> str | None:
     return nearest_snapshot_on_or_before(target, available)
 
 
+def _schedule_search(background_tasks: BackgroundTasks) -> RedirectResponse:
+    background_tasks.add_task(_run_snapshot_job)
+    return RedirectResponse("/?search_started=1", status_code=303)
+
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, selected: str | None = None, snapshot_date: str | None = None):
     today = date.today().isoformat()
@@ -222,27 +210,19 @@ async def home(request: Request, selected: str | None = None, snapshot_date: str
 
 @app.get("/models", response_class=HTMLResponse)
 async def models_page(request: Request):
-    active_models = [
-        {
-            "key": model["key"],
-            "label": format_model_label(model),
-        }
-        for model in sorted(get_models(), key=lambda item: item["priority"])
-    ]
     return templates.TemplateResponse(
         request,
         "models.html",
         {
             "catalog": get_model_catalog(),
             "catalog_json": json.dumps(_catalog_for_picker()),
-            "slots": _model_picker_slots(),
-            "active_models": active_models,
+            "selection_json": json.dumps(get_model_selection()),
         },
     )
 
 
-@app.post("/models/save")
-async def save_models(request: Request, background_tasks: BackgroundTasks):
+@app.post("/models/search")
+async def search_models(request: Request, background_tasks: BackgroundTasks):
     form = await request.form()
     submitted: list[dict[str, str]] = []
     for index in range(5):
@@ -252,10 +232,16 @@ async def save_models(request: Request, background_tasks: BackgroundTasks):
             submitted.append({"make": make, "model": model})
 
     validated = validate_model_selection(submitted)
-    if validated:
-        save_model_selection(validated)
-        return _schedule_search(background_tasks)
-    return RedirectResponse("/models", status_code=303)
+    if not validated:
+        return RedirectResponse("/models", status_code=303)
+
+    save_model_selection(validated)
+    return _schedule_search(background_tasks)
+
+
+@app.post("/models/save")
+async def save_models_legacy(request: Request, background_tasks: BackgroundTasks):
+    return await search_models(request, background_tasks)
 
 
 @app.get("/trends", response_class=HTMLResponse)
@@ -336,11 +322,6 @@ async def run_now_post(background_tasks: BackgroundTasks):
 async def run_api(background_tasks: BackgroundTasks) -> JSONResponse:
     background_tasks.add_task(_run_snapshot_job)
     return JSONResponse({"status": "started"})
-
-
-def _schedule_search(background_tasks: BackgroundTasks) -> RedirectResponse:
-    background_tasks.add_task(_run_snapshot_job)
-    return RedirectResponse("/?search_started=1", status_code=303)
 
 
 def _normalize(value: str) -> str:

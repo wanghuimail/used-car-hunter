@@ -327,6 +327,47 @@ button.secondary {
   margin: 1rem 0;
 }
 
+.model-add-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 1rem 0 0.5rem;
+}
+
+.model-add-row select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  font: inherit;
+}
+
+.model-add-row select:disabled {
+  background: #eef2f6;
+  color: var(--muted);
+}
+
+.selection-count {
+  margin: 0.25rem 0 0.75rem;
+}
+
+.selected-model-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.selected-model-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
 .model-picker-row {
   display: grid;
   grid-template-columns: 2.5rem 1fr 1fr;
@@ -363,6 +404,10 @@ button.secondary {
 }
 
 @media (max-width: 640px) {
+  .model-add-row {
+    grid-template-columns: 1fr;
+  }
+
   .model-picker-row {
     grid-template-columns: 1fr;
   }
