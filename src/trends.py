@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from src.config import format_model_label, get_models, model_labels_map
+from src.config import format_model_label, get_models
 from src.database import get_recommendations, list_snapshot_dates
 from src.drive_away import estimate_drive_away
 from src.filters import row_is_recommendable
@@ -13,10 +13,6 @@ from src.listing_status import (
     enrich_pick_status,
     reset_listing_status_cache,
 )
-
-def _model_labels() -> dict[str, str]:
-    return model_labels_map()
-
 
 def _model_order() -> list[dict[str, Any]]:
     return sorted(get_models(), key=lambda item: item["priority"])
@@ -72,6 +68,7 @@ def build_trend_view(
     all_dates = list_snapshot_dates(limit=max(days, 30))
     dates = all_dates[:days]
     model_defs = _model_order()
+    labels = {model["key"]: format_model_label(model) for model in model_defs}
     valid_keys = {model["key"] for model in model_defs}
 
     if model_key and model_key not in valid_keys:
@@ -153,7 +150,7 @@ def build_trend_view(
             model_rows.append(
                 {
                     "key": key,
-                    "label": _model_labels().get(key, model["model"]),
+                    "label": labels.get(key, model["model"]),
                     "picks": picks,
                     "pick_count": len(picks),
                     "top_price": picks[0]["price"] if picks else None,
@@ -183,7 +180,7 @@ def build_trend_view(
             cells.append(
                 {
                     "key": key,
-                    "label": _model_labels().get(key, model["model"]),
+                    "label": labels.get(key, model["model"]),
                     "price": price,
                     "delta": price_delta_by_date_model.get(snapshot_date, {}).get(key),
                 }
@@ -213,7 +210,7 @@ def build_trend_view(
         model_summaries.append(
             {
                 "key": key,
-                "label": _model_labels().get(key, model["model"]),
+                "label": labels.get(key, model["model"]),
                 "days_seen": len(top_prices),
                 "latest_top_price": latest,
                 "avg_top_price": round(sum(top_prices) / len(top_prices)),
@@ -227,9 +224,9 @@ def build_trend_view(
         "days": days,
         "days_tracked": len(dates),
         "selected_model": model_key,
-        "selected_model_label": _model_labels().get(model_key, "All models") if model_key else "All models",
+        "selected_model_label": labels.get(model_key, "All models") if model_key else "All models",
         "model_nav": [
-            {"key": model["key"], "label": _model_labels().get(model["key"], model["model"])}
+            {"key": model["key"], "label": labels.get(model["key"], model["model"])}
             for model in model_defs
         ],
         "day_sections": day_sections,

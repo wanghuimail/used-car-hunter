@@ -40,6 +40,21 @@
           <a href="#model-{{ model.key }}" class="model-jump-link">{{ model.label }}</a>
         {% endfor %}
       </div>
+      {% if search_started or search_running %}
+        <div class="notice-banner">
+          <strong>Search in progress.</strong>
+          Scraping all {{ model_nav | length }} selected models — refresh this page in 1–2 minutes.
+        </div>
+      {% elif snapshot_stale and is_today %}
+        <div class="notice-banner">
+          <strong>Search results are out of date.</strong>
+          Today's snapshot is missing
+          {% for model in missing_models %}
+            {{ model.label }}{% if not loop.last %}, {% endif %}
+          {% endfor %}.
+          <a href="/api/run-now">Run today's search now</a> to refresh all selected models.
+        </div>
+      {% endif %}
       <p class="listing-restrictions">
         Showing dealer listings only with estimated drive-away at or below ${{ "{:,}".format(max_drive_away) }}.
         Sold and sale-pending vehicles are excluded when the source site marks them unavailable.
@@ -68,17 +83,11 @@
           <p><a class="btn" href="/api/run-now">Run today's search now</a></p>
         {% endif %}
       </div>
-    {% elif not sections %}
-      <div class="empty">
-        Snapshot for {{ requested_date }} exists but has no recommendations.
-        {% if is_today %}
-          <p><a class="btn" href="/api/run-now">Run today's search again</a></p>
-        {% endif %}
-      </div>
-    {% else %}
+    {% elif sections %}
       {% for section in sections %}
         <section id="model-{{ section.key }}" class="model-section">
           <h2>{{ section.label }}</h2>
+          {% if section.listings %}
           <div class="grid">
             {% for item in section.listings %}
               <article class="card">
@@ -120,6 +129,12 @@
               </article>
             {% endfor %}
           </div>
+          {% else %}
+          <div class="model-empty">
+            <p>No eligible picks for {{ section.label }} in this snapshot.</p>
+            <p class="meta">Listings may be over budget, sold, outside Ontario, or none were found today.{% if is_today %} <a href="/api/run-now">Run today's search again</a> after changing models.{% endif %}</p>
+          </div>
+          {% endif %}
         </section>
       {% endfor %}
     {% endif %}

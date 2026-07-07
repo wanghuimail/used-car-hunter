@@ -8,7 +8,7 @@ from datetime import date
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Form, Request
+from fastapi import BackgroundTasks, FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -44,6 +44,24 @@ load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+_search_running = False
+
+
+def _run_snapshot_job() -> None:
+    global _search_running
+    if _search_running:
+        logger.info("Search already running; skipping duplicate request")
+        return
+    _search_running = True
+    try:
+        result = run_daily_snapshot()
+        logger.info("Search finished: %s", result)
+    except Exception:
+        logger.exception("Search failed")
+    finally:
+        _search_running = False
+
 
 WEB_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(WEB_DIR / "templates"))
@@ -127,8 +145,6 @@ def _build_sections(rows: list[dict]) -> list[dict]:
     sections: list[dict] = []
     for model in sorted(get_models(), key=lambda item: item["priority"]):
         items = sorted(by_key.get(model["key"], []), key=lambda item: item["rank"])
-        if not items:
-            continue
         sections.append(
             {
                 "key": model["key"],
@@ -139,6 +155,21 @@ def _build_sections(rows: list[dict]) -> list[dict]:
     return sections
 
 
+def _snapshot_missing_models(rows: list[dict]) -> list[dict[str, str]]:
+    labels = model_labels_map()
+    snapshot_keys = {row["model_key"] for row in rows}
+    missing: list[dict[str, str]] = []
+    for model in sorted(get_models(), key=lambda item: item["priority"]):
+        if model["key"] not in snapshot_keys:
+            missing.append(
+                {
+                    "key": model["key"],
+                    "label": labels.get(model["key"], model["model"]),
+                }
+            )
+    return missing
+
+
 def _nearest_snapshot(target: str, available: list[str]) -> str | None:
     return nearest_snapshot_on_or_before(target, available)
 
@@ -147,6 +178,7 @@ def _nearest_snapshot(target: str, available: list[str]) -> str | None:
 async def home(request: Request, selected: str | None = None, snapshot_date: str | None = None):
     today = date.today().isoformat()
     requested_date = snapshot_date or selected or today
+    search_started = request.query_params.get("search_started") == "1"
     available = list_snapshot_dates()
     has_snapshot = requested_date in available
     nearest_date = _nearest_snapshot(requested_date, available) if not has_snapshot else None
@@ -161,6 +193,8 @@ async def home(request: Request, selected: str | None = None, snapshot_date: str
     rows = _filter_display_rows(get_recommendations(requested_date) if has_snapshot else [])
     meta = get_snapshot_meta(requested_date) if has_snapshot else None
     max_drive_away = max_drive_away_cap()
+    sections = _build_sections(rows) if has_snapshot else []
+    missing_models = _snapshot_missing_models(rows) if has_snapshot else []
 
     return templates.TemplateResponse(
         request,
@@ -173,7 +207,11 @@ async def home(request: Request, selected: str | None = None, snapshot_date: str
             "nearest_date": nearest_date,
             "quick_dates": quick_dates,
             "snapshot_meta": meta,
-            "sections": _build_sections(rows),
+            "sections": sections,
+            "missing_models": missing_models,
+            "snapshot_stale": bool(missing_models),
+            "search_started": search_started,
+            "search_running": _search_running,
             "model_nav": _build_model_nav(),
             "is_today": requested_date == today,
             "max_drive_away": max_drive_away,
@@ -216,6 +254,7 @@ async def save_models(request: Request):
     validated = validate_model_selection(submitted)
     if validated:
         save_model_selection(validated)
+        return RedirectResponse("/api/run-now", status_code=303)
     return RedirectResponse("/models", status_code=303)
 
 
@@ -284,15 +323,15 @@ async def snapshots() -> JSONResponse:
 
 
 @app.post("/api/run-now")
-async def run_now():
-    result = run_daily_snapshot()
-    return RedirectResponse("/", status_code=303)
+async def run_now(background_tasks: BackgroundTasks):
+    background_tasks.add_task(_run_snapshot_job)
+    return RedirectResponse("/?search_started=1", status_code=303)
 
 
 @app.post("/api/run")
-async def run_api() -> JSONResponse:
-    result = run_daily_snapshot()
-    return JSONResponse(result)
+async def run_api(background_tasks: BackgroundTasks) -> JSONResponse:
+    background_tasks.add_task(_run_snapshot_job)
+    return JSONResponse({"status": "started"})
 
 
 def _normalize(value: str) -> str:

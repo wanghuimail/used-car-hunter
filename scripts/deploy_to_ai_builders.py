@@ -8,6 +8,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 API_URL = "https://space.ai-builders.com/backend/v1/deployments"
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "deploy-config.json"

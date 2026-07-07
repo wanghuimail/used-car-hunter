@@ -372,6 +372,26 @@ button.secondary {
   }
 }
 
+.model-empty {
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: #f8fafb;
+}
+
+.notice-banner {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #f0d58c;
+  background: #fffbeb;
+  color: var(--text);
+}
+
+.notice-banner a {
+  font-weight: 600;
+}
+
 footer {
   margin-top: 2rem;
   color: var(--muted);
